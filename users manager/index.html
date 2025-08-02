@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestion des Utilisateurs</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    h1 {
+      color: #444;
+    }
+    input, button {
+      margin: 5px;
+      padding: 6px;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧑‍💼 Gestion des Utilisateurs</h1>
+
+  <div>
+    <input type="text" id="newName" placeholder="Nom de l'utilisateur" />
+    <button onclick="addUser()">Ajouter</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="userTable"></tbody>
+  </table>
+
+  <script>
+    const API_URL = "api/users.php";
+
+    function fetchUsers() {
+      fetch(API_URL)
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('userTable');
+          tbody.innerHTML = '';
+          data.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${user.id}</td>
+              <td>
+                <input type="text" value="${user.name}" id="name-${user.id}" />
+              </td>
+              <td>
+                <button onclick="updateUser(${user.id})">Modifier</button>
+                <button onclick="deleteUser(${user.id})">Supprimer</button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+        });
+    }
+
+    function addUser() {
+      const name = document.getElementById('newName').value;
+      if (!name) return alert("Veuillez entrer un nom.");
+      fetch(API_URL, {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name })
+      })
+      .then(res => res.json())
+      .then(() => {
+        document.getElementById('newName').value = '';
+        fetchUsers();
+      });
+    }
+
+    function updateUser(id) {
+      const name = document.getElementById(`name-${id}`).value;
+      fetch(`${API_URL}?id=${id}`, {
+        method: "PUT",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name })
+      })
+      .then(res => res.json())
+      .then(() => fetchUsers());
+    }
+
+    function deleteUser(id) {
+      if (!confirm("Confirmer la suppression ?")) return;
+      fetch(`${API_URL}?id=${id}`, { method: "DELETE" })
+        .then(res => res.json())
+        .then(() => fetchUsers());
+    }
+
+    fetchUsers(); // chargement initial
+  </script>
+
+</body>
+</html>
